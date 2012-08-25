@@ -1,6 +1,6 @@
 package Code::TidyAll::Plugin::Perl::IgnoreMethodSignaturesSimple;
 BEGIN {
-  $Code::TidyAll::Plugin::Perl::IgnoreMethodSignaturesSimple::VERSION = '0.01';
+  $Code::TidyAll::Plugin::Perl::IgnoreMethodSignaturesSimple::VERSION = '0.02';
 }
 use strict;
 use warnings;
@@ -9,12 +9,8 @@ use base qw(Code::TidyAll::Plugin);
 sub preprocess_source {
     my ( $self, $source ) = @_;
 
-    for ($source) {
-
-        # Turn method and func into sub
-        s/^method (.*)/sub $1 \#__MSS_METHOD/gm;
-        s/^func (.*)/sub $1 \#__MSS_FUNC/gm;
-    }
+    $source =~
+      s/^(method|func)\s+(\w+)([^\{]+)\{/$self->_munged_sub($1, $2, $3)/gme;
 
     return $source;
 }
@@ -22,23 +18,37 @@ sub preprocess_source {
 sub postprocess_source {
     my ( $self, $source ) = @_;
 
-    for ($source) {
+    foreach my $id ( keys( %{ $self->{saves} } ) ) {
+        my ( $keyword, $name, $rest ) = @{ $self->{saves}->{$id} };
+        for ( $name, $rest ) { s/^\s+//; s/\s+$// }
 
-        # Turn sub back into method and func
-        s/^sub (.*?)\s* \#__MSS_METHOD/method $1/gm;
-        s/^sub (.*?)\s* \#__MSS_FUNC/func $1/gm;
+        # Blank parens if no params list
+        #
+        $rest = '()' if $rest !~ /\S/;
 
-        # Add empty parens
-        s/^(method|func)(\s*\w+\s*)\{/$1$2\(\) \{/gm;
+        # No space inside parens
+        #
+        $rest =~ s/\(\s+/\(/;
+        $rest =~ s/\s+\)/\)/;
 
-        # One arg, no spaces inside paren
-        s/^(method|func) (\w+) \(\s*([\$\@\%]\w+)\s*\)/$1 $2 \($3\)/gm;
-
-        # Space between method name and paren
-        s/^(method|func) (\w+)\(/$1 $2 \(/gm;
+        $source =~ s/sub MUNGED_${id}_/$keyword $name $rest/;
     }
 
     return $source;
+}
+
+sub _munged_sub {
+    my ( $self, $keyword, $name, $rest ) = @_;
+
+    my $id = $self->_unique_id;
+    $self->{saves}->{$id} = [ $keyword, $name, $rest ];
+    return "sub MUNGED_${id}_ {";
+}
+
+my $unique_id = 0;
+
+sub _unique_id {
+    return join( '_', time, $unique_id++ );
 }
 
 1;
@@ -54,7 +64,7 @@ Method::Signatures::Simple directives for perltidy and perlcritic
 
 =head1 VERSION
 
-version 0.01
+version 0.02
 
 =head1 SYNOPSIS
 

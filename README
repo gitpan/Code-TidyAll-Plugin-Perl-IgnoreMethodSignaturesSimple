@@ -3,7 +3,7 @@ NAME
     Method::Signatures::Simple directives for perltidy and perlcritic
 
 VERSION
-    version 0.01
+    version 0.02
 
 SYNOPSIS
         use Code::TidyAll::Plugin::Perl::IgnoreMethodSignaturesSimple
