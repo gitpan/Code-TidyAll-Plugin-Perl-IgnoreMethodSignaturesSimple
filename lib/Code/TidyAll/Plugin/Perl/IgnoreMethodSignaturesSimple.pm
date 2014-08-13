@@ -1,7 +1,5 @@
 package Code::TidyAll::Plugin::Perl::IgnoreMethodSignaturesSimple;
-BEGIN {
-  $Code::TidyAll::Plugin::Perl::IgnoreMethodSignaturesSimple::VERSION = '0.02';
-}
+$Code::TidyAll::Plugin::Perl::IgnoreMethodSignaturesSimple::VERSION = '0.03';
 use strict;
 use warnings;
 use base qw(Code::TidyAll::Plugin);
@@ -10,7 +8,7 @@ sub preprocess_source {
     my ( $self, $source ) = @_;
 
     $source =~
-      s/^(method|func)\s+(\w+)([^\{]+)\{/$self->_munged_sub($1, $2, $3)/gme;
+      s/^\h*(method|func)\s+(\w+)([^\{]+)\{/$self->_munged_sub($1, $2, $3)/gme;
 
     return $source;
 }
@@ -53,7 +51,7 @@ sub _unique_id {
 
 1;
 
-
+__END__
 
 =pod
 
@@ -64,7 +62,7 @@ Method::Signatures::Simple directives for perltidy and perlcritic
 
 =head1 VERSION
 
-version 0.02
+version 0.03
 
 =head1 SYNOPSIS
 
@@ -117,7 +115,3 @@ This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
 
 =cut
-
-
-__END__
-
